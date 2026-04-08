@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur Chantier - Decouvre ta vraie marge</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: radial-gradient(ellipse at top, #1a1000 0%, #0a0a0a 70%);
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        /* Left */
+        .badge {
+            display: inline-block;
+            background: rgba(255,140,0,0.15);
+            border: 1px solid rgba(255,140,0,0.3);
+            color: #ff8c00;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 20px;
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, #ff8c00, #ff6600);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #aaa;
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+
+        .features { list-style: none; margin-bottom: 32px; }
+        .features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            color: #ccc;
+            font-size: 1rem;
+        }
+        .features li::before {
+            content: '';
+            width: 20px; height: 20px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff8c00' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center/contain no-repeat;
+            flex-shrink: 0;
+        }
+
+        .social-proof {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .avatars { display: flex; }
+        .avatars span {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 2px solid #0a0a0a;
+            margin-left: -10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700;
+        }
+        .avatars span:first-child { margin-left: 0; background: #ff8c00; color: #000; }
+        .avatars span:nth-child(2) { background: #cc7000; color: #fff; }
+        .avatars span:nth-child(3) { background: #994f00; color: #fff; }
+        .avatars span:nth-child(4) { background: #663300; color: #fff; }
+        .social-proof p { font-size: 0.9rem; color: #888; }
+        .social-proof p strong { color: #ff8c00; }
+
+        /* Right - Form Card */
+        .form-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 40px 36px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(255,140,0,0.03);
+        }
+
+        .form-card h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+        .form-card .form-subtitle { color: #888; font-size: 0.95rem; margin-bottom: 28px; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #aaa;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+        }
+        .form-group input::placeholder { color: #444; }
+        .form-group input:focus {
+            border-color: #ff8c00;
+            box-shadow: 0 0 0 3px rgba(255,140,0,0.15);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #ff8c00, #e67600);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 8px;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255,140,0,0.35);
+        }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 14px;
+            font-size: 0.78rem;
+            color: #555;
+        }
+
+        /* Success state */
+        .success-msg {
+            display: none;
+            text-align: center;
+            padding: 20px 0;
+        }
+        .success-msg .check {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+        .success-msg h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+        .success-msg p { color: #888; font-size: 0.95rem; line-height: 1.6; }
+
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; gap: 36px; }
+        }
+        @media (max-width: 600px) {
+            body { padding: 24px 16px; align-items: flex-start; }
+            h1 { font-size: 1.9rem; }
+            .form-card { padding: 28px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left -->
+        <div class="copy">
+            <div class="badge">CALCULATEUR CHANTIER</div>
+            <h1>Tu <span>gagnes vraiment</span> de l'argent sur tes chantiers ?</h1>
+            <p class="subtitle">
+                Decouvre ta vraie marge en quelques clics. Materiaux, heures, charges, frais annexes... on calcule tout pour toi.
+            </p>
+            <ul class="features">
+                <li>Adapte a ton metier : macon, plombier, electricien...</li>
+                <li>Charges URSSAF integrees (micro, EI, SARL, SAS)</li>
+                <li>Calcul du prix de vente ideal par chantier</li>
+                <li>100% gratuit, accessible sur telephone</li>
+            </ul>
+
+        </div>
+
+        <!-- Right -->
+        <div class="form-card">
+            <div id="form-wrap">
+                <h2>Accede au calculateur gratuit</h2>
+                <p class="form-subtitle">Entre ton prenom et ton email pour recevoir l'acces.</p>
+
+                <form name="inscriptions" netlify netlify-honeypot="bot-field" id="capture-form">
+                    <input type="hidden" name="form-name" value="inscriptions">
+                    <p style="display:none"><input name="bot-field"></p>
+
+                    <div class="form-group">
+                        <label for="prenom">Prenom</label>
+                        <input type="text" id="prenom" name="prenom" placeholder="Tony Stark" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="Tony@stark.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tel">Telephone</label>
+                        <input type="tel" id="tel" name="tel" placeholder="06 12 34 56 78" required>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="btn-submit">
+                        Acceder au calculateur →
+                    </button>
+                </form>
+
+                <p class="form-footer">Pas de spam. Juste l'acces a l'outil.</p>
+            </div>
+
+            <div class="success-msg" id="success-msg">
+                <div class="check">✅</div>
+                <h3>C'est parti !</h3>
+                <p>Tu vas etre redirige vers le calculateur dans quelques secondes...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('capture-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.textContent = 'Envoi...';
+
+            const prenom = document.getElementById('prenom').value;
+            const email  = document.getElementById('email').value;
+            const tel    = document.getElementById('tel').value;
+
+            fetch('/api/inscription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prenom, email, tel })
+            })
+            .then(res => {
+                document.getElementById('form-wrap').style.display = 'none';
+                document.getElementById('success-msg').style.display = 'block';
+                setTimeout(() => { window.location.href = '/outil.html'; }, 2500);
+            })
+            .catch(() => {
+                window.location.href = '/outil.html';
+            });
+        });
+    </script>
+</body>
+</html>

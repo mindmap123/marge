@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur Chantier</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+        }
+        .page { max-width: 680px; margin: 0 auto; padding: 32px 16px 60px; }
+
+        /* Header */
+        .header { text-align: center; margin-bottom: 32px; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,140,0,0.12);
+            border: 1px solid rgba(255,140,0,0.3);
+            color: #ff8c00; padding: 6px 16px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 700; letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+        .header h1 { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 10px; }
+        .header h1 span {
+            background: linear-gradient(135deg, #ff8c00, #ff6600);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            font-family: 'Courier New', monospace;
+        }
+        .header p { color: #888; font-size: 0.95rem; }
+
+        /* Progress */
+        .progress-bar-wrap { margin-bottom: 28px; }
+        .progress-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .progress-top span { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #666; }
+        .progress-top .count { color: #ff8c00; }
+        .progress-track { height: 4px; background: #1a1a1a; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ff8c00, #ff6600); border-radius: 4px; transition: width 0.4s ease; }
+
+        /* Metier grid */
+        .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #666; margin-bottom: 12px; }
+        .metier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .metier-btn {
+            background: #111; border: 1px solid #222; border-radius: 12px;
+            padding: 16px 8px; text-align: center; cursor: pointer;
+            transition: border-color 0.2s, background 0.2s; font-size: 0.85rem; color: #ccc;
+        }
+        .metier-btn .emoji { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+        .metier-btn:hover { border-color: #444; }
+        .metier-btn.selected { border-color: #ff8c00; background: rgba(255,140,0,0.08); color: #fff; }
+
+        /* Field cards */
+        .field-card {
+            background: #111; border: 1px solid #1e1e1e;
+            border-radius: 14px; padding: 20px; margin-bottom: 12px;
+            transition: border-color 0.3s;
+        }
+        .field-card.active { border-color: #ff8c00; }
+        .field-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .field-num {
+            width: 28px; height: 28px; border-radius: 8px;
+            background: #ff8c00; color: #000;
+            font-size: 0.85rem; font-weight: 800;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .field-info h3 { font-size: 1rem; font-weight: 700; }
+        .field-info p { font-size: 0.8rem; color: #666; margin-top: 2px; }
+
+        .input-wrap { position: relative; margin-bottom: 12px; }
+        .input-wrap input {
+            width: 100%; padding: 16px 48px 16px 16px;
+            background: #1a1a1a; border: 1px solid #2a2a2a;
+            border-radius: 10px; color: #fff; font-size: 1.3rem; font-weight: 700;
+            outline: none; transition: border-color 0.2s;
+            -webkit-appearance: none;
+        }
+        .input-wrap input:focus { border-color: #ff8c00; }
+        .input-wrap input::placeholder { color: #333; }
+        .input-wrap .unit {
+            position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+            color: #555; font-size: 1rem; font-weight: 600; pointer-events: none;
+        }
+
+        /* Quick buttons */
+        .quick-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+        .quick-btn {
+            padding: 7px 14px; background: #1a1a1a; border: 1px solid #2a2a2a;
+            border-radius: 8px; color: #aaa; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .quick-btn:hover { border-color: #ff8c00; color: #ff8c00; }
+
+        /* Submit */
+        .btn-submit {
+            width: 100%; padding: 20px;
+            background: linear-gradient(135deg, #ff8c00, #e67600);
+            color: #000; border: none; border-radius: 14px;
+            font-size: 1.1rem; font-weight: 800; cursor: pointer;
+            letter-spacing: 1px; text-transform: uppercase;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 8px;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,140,0,0.4); }
+        .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* ===== RESULTS ===== */
+        #results-view { display: none; }
+
+        .result-header { text-align: center; margin-bottom: 28px; }
+        .score-badge {
+            display: inline-block; padding: 8px 20px; border-radius: 30px;
+            font-size: 0.9rem; font-weight: 700; margin-bottom: 12px;
+        }
+        .result-header h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
+        .result-header p { color: #888; font-size: 0.95rem; }
+
+        /* Gauge */
+        .gauge-container { display: flex; justify-content: center; margin-bottom: 24px; position: relative; }
+        .gauge-container svg { width: 220px; height: 130px; }
+        .gauge-bg { fill: none; stroke: #1e1e1e; stroke-width: 14; stroke-linecap: round; }
+        .gauge-fill { fill: none; stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset 1.5s cubic-bezier(0.25,0.46,0.45,0.94), stroke 0.5s; }
+        .gauge-value { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); text-align: center; }
+        .gauge-value .number { font-size: 2.4rem; font-weight: 900; line-height: 1; }
+        .gauge-value .label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Result grid */
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .result-card { background: #111; border: 1px solid #1e1e1e; border-radius: 12px; padding: 16px; text-align: center; }
+        .result-card .card-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .result-card .card-value { font-size: 1.4rem; font-weight: 800; }
+        .result-card.highlight { border-color: rgba(255,140,0,0.3); background: rgba(255,140,0,0.05); }
+        .result-card.highlight .card-value { color: #ff8c00; }
+
+        /* Conseils */
+        .conseil-box { background: #111; border: 1px solid #1e1e1e; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .conseil-box h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; }
+        .conseil-list { list-style: none; }
+        .conseil-list li { display: flex; gap: 10px; padding: 8px 0; font-size: 0.88rem; color: #ccc; border-bottom: 1px solid #1a1a1a; }
+        .conseil-list li:last-child { border-bottom: none; }
+
+        /* CTA */
+        .cta-box { background: linear-gradient(135deg, rgba(255,140,0,0.1), rgba(255,100,0,0.05)); border: 1px solid rgba(255,140,0,0.2); border-radius: 14px; padding: 24px; text-align: center; margin-bottom: 16px; }
+        .cta-box h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
+        .cta-box p { color: #aaa; font-size: 0.88rem; margin-bottom: 16px; line-height: 1.6; }
+        .btn-cta { display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #ff8c00, #e67600); color: #000; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 800; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255,140,0,0.35); }
+
+        .btn-reset { width: 100%; padding: 16px; background: #111; color: #fff; border: 1px solid #222; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+        .btn-reset:hover { background: #1a1a1a; }
+
+        /* Colors */
+        .level-red { color: #ff4444; } .level-orange { color: #ff8c00; } .level-green { color: #00c853; } .level-purple { color: #aa66ff; }
+        .bg-red { background: rgba(255,68,68,0.15); color: #ff4444; border: 1px solid rgba(255,68,68,0.3); }
+        .bg-orange { background: rgba(255,140,0,0.15); color: #ff8c00; border: 1px solid rgba(255,140,0,0.3); }
+        .bg-green { background: rgba(0,200,83,0.15); color: #00c853; border: 1px solid rgba(0,200,83,0.3); }
+        .bg-purple { background: rgba(170,102,255,0.15); color: #aa66ff; border: 1px solid rgba(170,102,255,0.3); }
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+    </style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<div class="page">
+
+    <!-- FORM VIEW -->
+    <div id="form-view">
+        <div class="header">
+            <div class="badge">⚡ CALCULATEUR CHANTIER</div>
+            <h1>Tu <span>gagnes vraiment</span><br>de l'argent ?</h1>
+            <p>Remplis les champs. Decouvre ta vraie marge.</p>
+        </div>
+
+        <div class="progress-bar-wrap">
+            <div class="progress-top">
+                <span>Commence ici</span>
+                <span class="count" id="progress-count">0/6</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+
+        <!-- Metier -->
+        <div class="section-label">Ton metier</div>
+        <div class="metier-grid" id="metier-grid">
+            <div class="metier-btn" data-metier="macon"><span class="emoji">🧱</span>Macon</div>
+            <div class="metier-btn" data-metier="plombier"><span class="emoji">🔧</span>Plombier</div>
+            <div class="metier-btn" data-metier="electricien"><span class="emoji">⚡</span>Electricien</div>
+            <div class="metier-btn" data-metier="couvreur"><span class="emoji">🏠</span>Couvreur</div>
+            <div class="metier-btn" data-metier="menuisier"><span class="emoji">🪚</span>Menuisier</div>
+            <div class="metier-btn" data-metier="autre"><span class="emoji">🔨</span>Autre</div>
+        </div>
+
+        <!-- Field 1 -->
+        <div class="field-card" id="card-materiaux">
+            <div class="field-header">
+                <div class="field-num">1</div>
+                <div class="field-info"><h3>Cout materiaux</h3><p>Tout compris : fournitures, consommables</p></div>
+            </div>
+            <div class="input-wrap">
+                <input type="number" id="materiaux" placeholder="0" min="0" inputmode="decimal">
+                <span class="unit">€</span>
+            </div>
+            <div class="quick-btns">
+                <button class="quick-btn" data-target="materiaux" data-val="500">500€</button>
+                <button class="quick-btn" data-target="materiaux" data-val="1500">1 500€</button>
+                <button class="quick-btn" data-target="materiaux" data-val="3000">3 000€</button>
+                <button class="quick-btn" data-target="materiaux" data-val="5000">5 000€</button>
+            </div>
+        </div>
+
+        <!-- Field 2 -->
+        <div class="field-card" id="card-heures">
+            <div class="field-header">
+                <div class="field-num">2</div>
+                <div class="field-info"><h3>Heures prevues</h3><p>Temps total sur le chantier</p></div>
+            </div>
+            <div class="input-wrap">
+                <input type="number" id="heures" placeholder="0" min="0" inputmode="decimal">
+                <span class="unit">h</span>
+            </div>
+            <div class="quick-btns">
+                <button class="quick-btn" data-target="heures" data-val="8">1 jour</button>
+                <button class="quick-btn" data-target="heures" data-val="24">3 jours</button>
+                <button class="quick-btn" data-target="heures" data-val="40">1 sem.</button>
+                <button class="quick-btn" data-target="heures" data-val="80">2 sem.</button>
+            </div>
+        </div>
+
+        <!-- Field 3 -->
+        <div class="field-card" id="card-taux">
+            <div class="field-header">
+                <div class="field-num">3</div>
+                <div class="field-info"><h3>Taux horaire souhaite</h3><p>Ce que tu veux te payer de l'heure</p></div>
+            </div>
+            <div class="input-wrap">
+                <input type="number" id="taux" placeholder="0" min="0" inputmode="decimal">
+                <span class="unit">€/h</span>
+            </div>
+            <div class="quick-btns">
+                <button class="quick-btn" data-target="taux" data-val="25">25€</button>
+                <button class="quick-btn" data-target="taux" data-val="35">35€</button>
+                <button class="quick-btn" data-target="taux" data-val="45">45€</button>
+                <button class="quick-btn" data-target="taux" data-val="60">60€</button>
+            </div>
+        </div>
+
+        <!-- Field 4 -->
+        <div class="field-card" id="card-frais">
+            <div class="field-header">
+                <div class="field-num">4</div>
+                <div class="field-info"><h3>Frais annexes</h3><p>Deplacements, location, sous-traitance...</p></div>
+            </div>
+            <div class="input-wrap">
+                <input type="number" id="frais" placeholder="0" min="0" inputmode="decimal">
+                <span class="unit">€</span>
+            </div>
+            <div class="quick-btns">
+                <button class="quick-btn" data-target="frais" data-val="0">Aucun</button>
+                <button class="quick-btn" data-target="frais" data-val="200">200€</button>
+                <button class="quick-btn" data-target="frais" data-val="500">500€</button>
+                <button class="quick-btn" data-target="frais" data-val="1000">1 000€</button>
+            </div>
+        </div>
+
+        <!-- Field 5 -->
+        <div class="field-card" id="card-charges">
+            <div class="field-header">
+                <div class="field-num">5</div>
+                <div class="field-info"><h3>Charges (URSSAF, etc.)</h3><p>Micro ~22% · SARL/SAS ~45-50%</p></div>
+            </div>
+            <div class="input-wrap">
+                <input type="number" id="charges" placeholder="0" min="0" max="100" inputmode="decimal">
+                <span class="unit">%</span>
+            </div>
+            <div class="quick-btns">
+                <button class="quick-btn" data-target="charges" data-val="22">Micro 22%</button>
+                <button class="quick-btn" data-target="charges" data-val="33">EI 33%</button>
+                <button class="quick-btn" data-target="charges" data-val="45">SARL 45%</button>
+                <button class="quick-btn" data-target="charges" data-val="50">SAS 50%</button>
+            </div>
+        </div>
+
+        <!-- Field 6 -->
+        <div class="field-card" id="card-marge">
+            <div class="field-header">
+                <div class="field-num">6</div>
+                <div class="field-info"><h3>Marge souhaitee</h3><p>Le benef que tu veux degager</p></div>
+            </div>
+            <div class="input-wrap">
+                <input type="number" id="marge" placeholder="0" min="0" max="100" inputmode="decimal">
+                <span class="unit">%</span>
+            </div>
+            <div class="quick-btns">
+                <button class="quick-btn" data-target="marge" data-val="15">15%</button>
+                <button class="quick-btn" data-target="marge" data-val="25">25%</button>
+                <button class="quick-btn" data-target="marge" data-val="35">35%</button>
+                <button class="quick-btn" data-target="marge" data-val="50">50%</button>
+            </div>
+        </div>
+
+        <button class="btn-submit" id="btn-calculate">🔥 CALCULER MA MARGE</button>
+    </div>
+
+    <!-- RESULTS VIEW -->
+    <div id="results-view">
+        <div class="result-header">
+            <div class="score-badge" id="score-badge">--</div>
+            <h2 id="result-title">--</h2>
+            <p id="result-subtitle">--</p>
+        </div>
+        <div class="gauge-container">
+            <svg viewBox="0 0 220 130">
+                <path class="gauge-bg" d="M 20 110 A 90 90 0 0 1 200 110"/>
+                <path class="gauge-fill" id="gauge-path" d="M 20 110 A 90 90 0 0 1 200 110"/>
+            </svg>
+            <div class="gauge-value">
+                <div class="number" id="gauge-number">0%</div>
+                <div class="label">Taux de marge</div>
+            </div>
+        </div>
+        <div class="result-grid">
+            <div class="result-card"><div class="card-label">Cout direct + charges</div><div class="card-value" id="r-cout">--</div></div>
+            <div class="result-card"><div class="card-label">Base (avec ta remuneration)</div><div class="card-value" id="r-revient">--</div></div>
+            <div class="result-card highlight"><div class="card-label">Prix de vente conseille</div><div class="card-value" id="r-vente">--</div></div>
+            <div class="result-card highlight" style="border-color: rgba(0,200,83,0.3); background: rgba(0,200,83,0.05);"><div class="card-label">Benefice estime</div><div class="card-value" id="r-benefice" style="color: #00c853; font-size: 1.8rem;">--</div></div>
+        </div>
+        <div class="conseil-box">
+            <h3>💡 Conseils pour ton chantier</h3>
+            <ul class="conseil-list" id="conseil-list"></ul>
+        </div>
+        <div class="cta-box">
+            <h3>Envie de mieux gerer tes chantiers ?</h3>
+            <p>Rejoins la formation et apprends a fixer tes prix, maitriser tes charges et maximiser ta rentabilite.</p>
+            <button class="btn-cta" id="btn-formation">Decouvrir la formation</button>
+        </div>
+        <button class="btn-reset" id="btn-reset">↩ Recalculer</button>
+    </div>
+
+</div>
+
+<script>
+    const fieldIds = ['materiaux','heures','taux','frais','charges','marge'];
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Metier selection
+    document.querySelectorAll('.metier-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.metier-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+    });
+
+    // Quick buttons
+    document.querySelectorAll('.quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.dataset.target;
+            const val = btn.dataset.val;
+            document.getElementById(target).value = val;
+            updateProgress();
+            updateCardState(target);
+        });
+    });
+
+    // Input focus → active card
+    fieldIds.forEach(id => {
+        const input = document.getElementById(id);
+        input.addEventListener('focus', () => {
+            document.querySelectorAll('.field-card').forEach(c => c.classList.remove('active'));
+            document.getElementById('card-' + id).classList.add('active');
+        });
+        input.addEventListener('input', () => { updateProgress(); updateCardState(id); });
+    });
+
+    function updateCardState(id) {
+        const input = document.getElementById(id);
+        const card = document.getElementById('card-' + id);
+        if (input.value.trim() !== '') card.style.borderColor = '#ff8c00';
+        else card.style.borderColor = '';
+    }
+
+    function updateProgress() {
+        let filled = fieldIds.filter(id => document.getElementById(id).value.trim() !== '').length;
+        const pct = Math.round((filled / fieldIds.length) * 100);
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('progress-count').textContent = filled + '/6';
+    }
+
+    // Calculate
+    document.getElementById('btn-calculate').addEventListener('click', () => {
+        const materiaux = parseFloat(document.getElementById('materiaux').value) || 0;
+        const heures    = parseFloat(document.getElementById('heures').value) || 0;
+        const taux      = parseFloat(document.getElementById('taux').value) || 0;
+        const frais     = parseFloat(document.getElementById('frais').value) || 0;
+        const chargesPct = parseFloat(document.getElementById('charges').value) || 0;
+        const margePct  = parseFloat(document.getElementById('marge').value) || 0;
+
+        if (materiaux === 0 && heures === 0) { document.getElementById('materiaux').focus(); return; }
+
+        const coutMainOeuvre = heures * taux;
+        const coutDirect = materiaux + frais;
+        const montantCharges = coutDirect * (chargesPct / 100);
+        const prixRevient = coutDirect + montantCharges;
+        const baseVente = prixRevient + coutMainOeuvre;
+        const coutTotal = prixRevient + coutMainOeuvre;
+        const prixVente = margePct < 100 ? baseVente / (1 - margePct / 100) : baseVente * 2;
+        const benefice = prixVente - baseVente;
+        const tauxMarge = prixVente > 0 ? (benefice / prixVente) * 100 : 0;
+
+        displayResults({ coutTotal, prixRevient, prixVente, benefice, tauxMarge, chargesPct, taux, heures, materiaux, margePct });
+    });
+
+    function displayResults(data) {
+        document.getElementById('form-view').style.display = 'none';
+        document.getElementById('results-view').style.display = 'block';
+
+        const fmt = n => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+        document.getElementById('r-cout').textContent = fmt(data.prixRevient);
+        document.getElementById('r-revient').textContent = fmt(data.coutTotal);
+        document.getElementById('r-vente').textContent = fmt(data.prixVente);
+        document.getElementById('r-benefice').textContent = fmt(data.benefice);
+
+        const m = data.tauxMarge;
+        let level, levelClass, title, subtitle, emoji;
+        if (m <= 0)       { level='Non rentable'; levelClass='red';    title='Attention, chantier a perte !'; subtitle="Tu perds de l'argent. Il faut revoir tes prix."; emoji='🚨'; }
+        else if (m < 15)  { level='Marge faible';  levelClass='orange'; title='Marge trop juste...'; subtitle='Tu couvres tes frais mais il reste tres peu pour toi.'; emoji='⚠️'; }
+        else if (m < 25)  { level='Marge correcte'; levelClass='green'; title='Bon chantier !'; subtitle='Ta marge est correcte. Tu peux encore ameliorer.'; emoji='✅'; }
+        else              { level='Excellent !';    levelClass='purple'; title='Excellent chantier !'; subtitle='Felicitations ! Ta marge est tres bonne.'; emoji='🏆'; }
+
+        const badge = document.getElementById('score-badge');
+        badge.textContent = emoji + ' ' + level;
+        badge.className = 'score-badge bg-' + levelClass;
+        document.getElementById('result-title').textContent = title;
+        document.getElementById('result-subtitle').textContent = subtitle;
+
+        animateGauge(m, levelClass);
+        generateConseils(data);
+        if (m >= 25) setTimeout(launchConfetti, 400);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function animateGauge(percent, levelClass) {
+        const path = document.getElementById('gauge-path');
+        const num  = document.getElementById('gauge-number');
+        const total = path.getTotalLength();
+        path.style.strokeDasharray = total;
+        path.style.strokeDashoffset = total;
+        const colors = { red:'#ff4444', orange:'#ff8c00', green:'#00c853', purple:'#aa66ff' };
+        path.style.stroke = colors[levelClass];
+        const clamped = Math.max(0, Math.min(percent, 100));
+        requestAnimationFrame(() => { path.style.strokeDashoffset = total - (total * clamped / 100); });
+
+        let current = 0;
+        const target = Math.round(percent * 10) / 10;
+        const start = performance.now();
+        function tick(now) {
+            const p = Math.min((now - start) / 1200, 1);
+            const e = 1 - Math.pow(1 - p, 3);
+            current = target * e;
+            num.textContent = current.toFixed(1) + '%';
+            num.className = 'number level-' + levelClass;
+            if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+    }
+
+    function generateConseils(data) {
+        const list = document.getElementById('conseil-list');
+        list.innerHTML = '';
+        const conseils = [];
+        if (data.tauxMarge <= 0) conseils.push({ icon:'🔴', text:'Ton prix ne couvre pas tes couts. Augmente ton prix de vente.' });
+        if (data.taux < 35) conseils.push({ icon:'💸', text:'Ton taux horaire (' + data.taux + '€/h) est bas. La moyenne artisan est entre 40 et 55€/h.' });
+        if (data.chargesPct > 40) conseils.push({ icon:'📉', text:'Tes charges (' + data.chargesPct + '%) sont elevees. Verifie ton regime fiscal.' });
+        if (data.materiaux > data.coutTotal * 0.6 && data.materiaux > 0) conseils.push({ icon:'🧱', text:'Les materiaux depassent 60% du cout. Negocie avec tes fournisseurs.' });
+        if (data.tauxMarge > 0 && data.tauxMarge < 15) conseils.push({ icon:'⚠️', text:'Marge trop faible. Le moindre imprévu te met dans le rouge.' });
+        if (data.margePct < 20) conseils.push({ icon:'🎯', text:'Vise au minimum 20-25% de marge pour couvrir les imprévus.' });
+        if (data.tauxMarge >= 25) conseils.push({ icon:'🏆', text:'Bravo ! Reinvestis une partie dans ton equipement ou ta formation.' });
+        if (data.heures > 80) conseils.push({ icon:'⏱️', text:'Plus de 80h prevues. Assure-toi d\'avoir bien estime la duree.' });
+        if (conseils.length === 0) conseils.push({ icon:'💡', text:'Tes chiffres sont equilibres. Continue a suivre ta rentabilite.' });
+        conseils.forEach(c => {
+            const li = document.createElement('li');
+            li.innerHTML = '<span>' + c.icon + '</span><span>' + c.text + '</span>';
+            list.appendChild(li);
+        });
+    }
+
+    function launchConfetti() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const particles = [];
+        const colors = ['#ff8c00','#ff6600','#ffaa33','#aa66ff','#00c853','#fff'];
+        for (let i = 0; i < 120; i++) {
+            particles.push({ x: canvas.width/2 + (Math.random()-0.5)*200, y: canvas.height/2, vx: (Math.random()-0.5)*16, vy: Math.random()*-18-4, color: colors[Math.floor(Math.random()*colors.length)], size: Math.random()*8+3, rotation: Math.random()*360, rotationSpeed: (Math.random()-0.5)*12, gravity: 0.3+Math.random()*0.2, opacity: 1 });
+        }
+        let frame = 0;
+        function animate() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            let alive = false;
+            particles.forEach(p => {
+                p.x+=p.vx; p.vy+=p.gravity; p.y+=p.vy; p.rotation+=p.rotationSpeed; p.vx*=0.99;
+                if (frame > 40) p.opacity -= 0.015;
+                if (p.opacity > 0) {
+                    alive = true;
+                    ctx.save(); ctx.globalAlpha = Math.max(0,p.opacity); ctx.translate(p.x,p.y); ctx.rotate(p.rotation*Math.PI/180); ctx.fillStyle=p.color; ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6); ctx.restore();
+                }
+            });
+            frame++;
+            if (alive) requestAnimationFrame(animate);
+            else ctx.clearRect(0,0,canvas.width,canvas.height);
+        }
+        animate();
+    }
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+        document.getElementById('results-view').style.display = 'none';
+        document.getElementById('form-view').style.display = 'block';
+        fieldIds.forEach(id => { document.getElementById(id).value = ''; document.getElementById('card-'+id).style.borderColor = ''; });
+        document.querySelectorAll('.metier-btn').forEach(b => b.classList.remove('selected'));
+        updateProgress();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    document.getElementById('btn-formation').addEventListener('click', () => {
+        window.open('https://www.skool.com/latelier-4560', '_blank');
+    });
+
+    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+</script>
+</body>
+</html>
